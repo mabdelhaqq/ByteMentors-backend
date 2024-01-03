@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const StudentSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -21,6 +20,22 @@ const StudentSchema = new mongoose.Schema({
   phoneNumber: {
     type: String,
   },
+  bio: {
+    type: String,
+  },
+  linkedin: {
+    type: String,
+  },
+  profileImage: {
+    type: String,
+  },
+  github: {
+    type: String,
+  },
+  gender: {
+    type: String,
+    enum: ['male', 'female'],
+  },
   graduate: {
     type: Boolean,
     default: false,
@@ -32,28 +47,15 @@ const StudentSchema = new mongoose.Schema({
   graduationYear: {
     type: Number,
   },
-  bio: {
-    type: String,
-  },
-  linkedin: {
-    type: String,
-  },
-  github: {
-    type: String,
-  },
-  gender: {
-    type: String,
-    enum: ['male', 'female'],
-  },
   preferredField: {
-    type: [String],
-    enum: ['front end', 'back end', 'full stack', 'QA', 'devops', 'mobile application', 'cyber security', 'other'],
+    type: String,
+    enum: ['front end', 'back end', 'QA', 'devops'],
   },
   skills: {
     type: [String],
     enum: ['HTML5', 'CSS3', 'JavaScript', 'BootStrap5', 'SASS', 'LESS', 'TypeScript', 'other'],
   },
-  profileImage: {
+  cv: {
     type: String,
   },
 });
