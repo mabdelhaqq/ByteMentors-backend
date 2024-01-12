@@ -157,7 +157,7 @@ app.post("/forgetpassword", async (req, res) => {
   try {
     const student = await StudentModel.findOne({ email });
     const company = await CompanyModel.findOne({ email });
-    const admin = await AdmimModel.findOne({ email });
+    const admin = await AdminModel.findOne({ email });
 
     if (student || company || admin) {
       const randomCode = Math.floor(1000 + Math.random() * 9000);
@@ -1054,26 +1054,6 @@ app.post('/updateCompanyInfo', async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
-  // app.get('/student/:id/opportunities', async (req, res) => {
-  //   const studentId = req.params.id;
-  //   try {
-  //     const opportunities = await OpportunityModel.find({ 'applicants.studentId': studentId })
-  //       .populate('companyId')
-  //       .lean();
-  
-  //     const opportunitiesWithStatus = opportunities.map(opportunity => {
-  //       const applicant = opportunity.applicants.find(a => a.studentId.toString() === studentId);
-  //       opportunity.applicantStatus = applicant ? applicant.status : 'not_found';
-
-  //       return opportunity;
-  //     });
-  
-  //     res.json({ success: true, opportunities: opportunitiesWithStatus });
-  //   } catch (error) {
-  //     console.error('Error fetching opportunities:', error);
-  //     res.status(500).json({ success: false, error: 'Internal server error' });
-  //   }
-  // });
   app.get('/student/:id/opportunities', async (req, res) => {
     const studentId = req.params.id;
     try {
@@ -1180,6 +1160,45 @@ app.post('/updateCompanyInfo', async (req, res) => {
     }
   });
 
+  app.post('/opportunity/:opportunityId/waiting/:studentId', async (req, res) => {
+    const { opportunityId, studentId } = req.params;
+  
+    try {
+      const opportunity = await OpportunityModel.findById(opportunityId).populate('companyId');
+      if (!opportunity) {
+        return res.status(404).json({ success: false, message: 'Opportunity not found' });
+      }
+  
+      const applicantIndex = opportunity.applicants.findIndex(applicant => applicant.studentId.toString() === studentId);
+      if (applicantIndex !== -1) {
+        opportunity.applicants[applicantIndex].status = 'waiting';
+        await opportunity.save();
+  
+        const company = await CompanyModel.findById(opportunity.companyId);
+        if (!company) {
+          return res.status(404).json({ success: false, message: 'Company not found' });
+        }
+  
+        const notification = new NotificationModel({
+          userId: studentId,
+          onModel: 'Student',
+          type: 'Interview Scheduled',
+          message: `An interview has been scheduled for you for the ${opportunity.field} opportunity at ${opportunity.companyId.companyName}.`,
+          isRead: false
+        });
+        await notification.save();
+  
+        res.json({ success: true, message: 'Applicant rejected successfully' });
+      } else {
+        res.status(404).json({ success: false, message: 'Applicant not found' });
+      }
+    } catch (error) {
+      console.error('Error updating applicant status:', error);
+      res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+  });
+
+
   app.get('/notifications/:userId', async (req, res) => {
     const { userId } = req.params;
   
@@ -1262,6 +1281,7 @@ app.post('/updateCompanyInfo', async (req, res) => {
       applicant.interviewType = interviewType;
       applicant.interviewDate = interviewDate;
       applicant.interviewTime = interviewTime;
+      applicant.status = 'waiting';
       if (interviewType === 'online') {
         applicant.interviewLink = interviewLink;
       } else if (interviewType === 'in-person') {
@@ -1285,7 +1305,7 @@ app.post('/updateCompanyInfo', async (req, res) => {
       res.status(500).json({ success: false, message: 'Internal server error' });
     }
   });
-  
+    
 app.listen("3001", () => {
   console.log("server worked!");
 });
