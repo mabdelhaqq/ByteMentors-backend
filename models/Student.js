@@ -39,7 +39,6 @@ const StudentSchema = new mongoose.Schema({
   graduate: {
     type: Boolean,
     default: false,
-    required: true,
   },
   university: {
     type: String,
@@ -49,11 +48,14 @@ const StudentSchema = new mongoose.Schema({
   },
   preferredField: {
     type: String,
-    enum: ['front end', 'back end', 'QA', 'devops'],
+    enum: ["Frontend", "Backend", "Full Stack", "Mobile Application", "Data Science", "Machine Learning",
+    "Artificial Intelligence", "Cyber Security", "Cloud Computing", "DevOps", "Network Administration",
+    "Database Administration", "Game Development", "User Experience (UX) Design", "User Interface (UI) Design",
+    "Quality Assurance", "Embedded Systems", "Internet of Things (IoT)", "Robotics",
+    "Systems Engineering", "Business Intelligence"],
   },
   skills: {
     type: [String],
-    enum: ['HTML5', 'CSS3', 'JavaScript', 'BootStrap5', 'SASS', 'LESS', 'TypeScript', 'other'],
   },
   cv: {
     type: String,

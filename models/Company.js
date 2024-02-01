@@ -27,6 +27,9 @@ const CompanySchema = new mongoose.Schema({
   linkedin: {
     type: String,
   },
+  website: {
+    type: String,
+  },
   profileImage: {
     type: String,
   },

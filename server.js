@@ -20,7 +20,6 @@ const OpportunityModel = require('./models/Opportunity');
 const PlanModel = require('./models/Plan');
 const NotificationModel = require('./models/Notification');
 const { sendMail } = require('./helpers/sendMail');
-const { sendCode } = require('./helpers/sendCode');
 
 let sentCode = 99999;
 
@@ -33,9 +32,21 @@ app.get("/companies", async (req, res) => {
   const company = await CompanyModel.find();
   res.json(company);
 });
-app.get("/opportunities", async (req, res) => {
+app.get("/opps", async (req, res) => {
   const opportunity = await OpportunityModel.find();
   res.json(opportunity);
+});
+app.get("/opportunities", async (req, res) => {
+  try {
+    const currentDateTime = new Date();
+    const opportunities = await OpportunityModel.find({
+      deadline: { $gte: currentDateTime }
+    });
+    res.json(opportunities);
+  } catch (error) {
+    console.error("Error fetching opportunities:", error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 app.get("/opportunitiesd", async (req, res) => {
   try {
@@ -49,8 +60,6 @@ app.get("/opportunitiesd", async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
-
 
 app.get("/admins", async (req, res) => {
   const admin = await AdminModel.find();
@@ -153,7 +162,6 @@ app.post("/login", async (req, res) => {
 });
 app.post("/forgetpassword", async (req, res) => {
   const { email } = req.body;
-
   try {
     const student = await StudentModel.findOne({ email });
     const company = await CompanyModel.findOne({ email });
@@ -162,8 +170,7 @@ app.post("/forgetpassword", async (req, res) => {
     if (student || company || admin) {
       const randomCode = Math.floor(1000 + Math.random() * 9000);
       sentCode = randomCode;
-
-      sendCode(email, "Password Reset Code", `Your password reset code is: ${sentCode}`).then(() => {
+      sendMail(email, "Password Reset Code", `Your password reset code is: ${sentCode}`).then(() => {
         res.json({ success: true, code: randomCode });
       });
     } else {
@@ -371,6 +378,28 @@ app.get("/getlinkedin", async (req, res) => {
   }
 });
 
+ app.get("/getwebsite", async (req, res) => {
+    const { email } = req.query;
+  
+    try {
+      const student = await StudentModel.findOne({ email });
+      const company = await CompanyModel.findOne({ email });
+      const admin = await AdminModel.findOne({ email });
+  
+      if (student) {
+        res.json({ website: null });
+      } else if (company) {
+        res.json({ website: company.website });
+      } else if (admin) {
+        res.json({ website: null });
+      } else {
+        res.status(404).json({ website: null });
+      }
+    } catch (error) {
+      res.status(500).json({ website: null, error: "An error occurred while fetching website" });
+    }
+  });
+
 app.get("/getprofileimage", async (req, res) => {
   const { email } = req.query;
 
@@ -565,7 +594,7 @@ app.get("/getgithub", async (req, res) => {
       res.status(500).json({ cv: null, error: "An error occurred while fetching Cv" });
     }
   });
-  
+
 app.post('/updateCompanyInfo', async (req, res) => {
     try {
       const { email, ...updatedInfo } = req.body;
@@ -598,6 +627,38 @@ app.post('/updateCompanyInfo', async (req, res) => {
       res.status(500).json({ success: false, error: "Internal Server Error" });
     }
   });
+  app.put('/updateStudent/:id', async (req, res) => {
+    const _id = req.params.id;
+    const updatedData = req.body;
+
+    try {
+        const updatedStudent = await StudentModel.findByIdAndUpdate(_id, updatedData, { new: true });
+        
+        if (updatedStudent) {
+            res.json({ success: true, student: updatedStudent });
+        } else {
+            res.status(404).json({ success: false, message: 'Student not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+app.put('/updateCompany/:id', async (req, res) => {
+  const _id = req.params.id;
+  const updatedData = req.body;
+
+  try {
+      const updatedCompany = await CompanyModel.findByIdAndUpdate(_id, updatedData, { new: true });
+      
+      if (updatedCompany) {
+          res.json({ success: true, company: updatedCompany });
+      } else {
+          res.status(404).json({ success: false, message: 'Company not found' });
+      }
+  } catch (error) {
+      res.status(500).json({ success: false, error: error.message });
+  }
+});
   app.post('/addOpportunity', async (req, res) => {
     try {
       const { companyId, field, deadline, description } = req.body;
@@ -965,11 +1026,25 @@ app.post('/updateCompanyInfo', async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
     }
   });
+  // app.get('/notificationss', async (req, res) => {
+  //   try {
+  //     const studentId = req.query.studentId;
+  //     const Notification = require('./models/Notification');
+  //     const notifications = await Notification.find({ userId: studentId });  
+  //     res.json(notifications);
+  //   } catch (error) {
+  //     console.error('Error fetching notifications:', error);
+  //     res.status(500).json({ error: 'Internal server error' });
+  //   }
+  // });
   app.get('/notificationss', async (req, res) => {
     try {
       const studentId = req.query.studentId;
+      if (!studentId || !mongoose.Types.ObjectId.isValid(studentId)) {
+        return res.status(400).json({ error: 'Invalid or missing studentId' });
+      }
       const Notification = require('./models/Notification');
-      const notifications = await Notification.find({ userId: studentId });  
+      const notifications = await Notification.find({ userId: studentId });
       res.json(notifications);
     } catch (error) {
       console.error('Error fetching notifications:', error);
@@ -1305,7 +1380,23 @@ app.post('/updateCompanyInfo', async (req, res) => {
       res.status(500).json({ success: false, message: 'Internal server error' });
     }
   });
-    
+
+  app.get('/username/:userId', async (req, res) => {
+    try {
+        const userId = req.params.userId;
+        const student = await StudentModel.findById(userId);
+        if (student) {
+            return res.json({ username: student.name });
+        }
+        const company = await CompanyModel.findById(userId);
+        if (company) {
+            return res.json({ username: company.companyName });
+        }
+        return res.status(404).json({ error: 'User not found' });
+    } catch (error) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});    
 app.listen("3001", () => {
   console.log("server worked!");
 });

@@ -4,14 +4,14 @@ const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   secure: true,
   auth: {
-    user: "mohamad4112002@gmail.com",
-    pass: "pktixjhmeunfksyc",
+    user: "bytementor6@gmail.com",
+    pass: "esak qdzh adel pmcy",
   },
 });
 
 async function sendMail(to, subject, text, html) {
   const info = await transporter.sendMail({
-    from: "mohamad4112002@gmail.com",
+    from: "bytementor6@gmail.com",
     to,
     subject,
     text,
