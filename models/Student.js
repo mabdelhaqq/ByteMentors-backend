@@ -16,9 +16,11 @@ const StudentSchema = new mongoose.Schema({
   city: {
     type: String,
     enum: ["Nablus", "Ramallah", "Jerusalem", "Bethlehem", "Hebron", "Jenin", "Tulkarm", "Qalqilya", "Jericho", "Rawabi","Tubas", 'other'],
+    required: true,
   },
   phoneNumber: {
     type: String,
+    required: true,
   },
   bio: {
     type: String,
@@ -35,6 +37,7 @@ const StudentSchema = new mongoose.Schema({
   gender: {
     type: String,
     enum: ['male', 'female'],
+    required: true,
   },
   graduate: {
     type: Boolean,

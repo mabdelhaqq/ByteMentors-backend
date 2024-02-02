@@ -17,9 +17,11 @@ const CompanySchema = new mongoose.Schema({
   city: {
     type: String,
     enum: ["Nablus", "Ramallah", "Jerusalem", "Bethlehem", "Hebron", "Jenin", "Tulkarm", "Qalqilya", "Jericho", "Rawabi","Tubas", 'other'],
+    required: true,
   },
   phoneNumber: {
     type: String,
+    required: true,
   },
   description: {
     type: String,
