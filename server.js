@@ -117,8 +117,10 @@ app.post('/addAdmin', async (req, res) => {
   const { email, password } = req.body;
   try {
     const existingAdmin = await AdminModel.findOne({ email });
-    if (existingAdmin) {
-      return res.status(400).json({ success: false, message: "An admin with this email already exists." });
+    const existingStudent = await StudentModel.findOne({ email });
+    const existingCompany = await CompanyModel.findOne({ email });
+    if (existingAdmin || existingStudent || existingCompany) {
+      return res.status(400).json({ success: false, message: "This email is already in use." });
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const newAdmin = new AdminModel({
